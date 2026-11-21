@@ -140,9 +140,65 @@
         <div id="violation-overlay" class="violation-overlay"></div>
 
         <div id="status-badge" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full text-white font-extrabold text-xs tracking-wider shadow-lg uppercase"></div>
+
+        <!-- Tombol Bantuan Keluar di Pojok Kanan Bawah -->
+        <button type="button" id="btn-info-keluar" class="fixed bottom-3 right-3 z-50 bg-slate-800/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm border border-slate-600/50 flex items-center gap-1.5 transition-all cursor-pointer">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>Sudah Selesai?</span>
+        </button>
     </div>
 
-    <!-- MODAL PERINGATAN -->
+    <!-- MODAL PETUNJUK KELUAR SETELAH SELESAI -->
+    <div id="finish-guide-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[150] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-7 max-w-sm w-full shadow-2xl border border-emerald-100">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2.5 bg-emerald-100 text-emerald-700 rounded-2xl">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-extrabold text-gray-900">Petunjuk Keluar Ujian</h3>
+                    <p class="text-xs text-gray-500 font-medium">Pastikan jawaban sudah terkirim</p>
+                </div>
+            </div>
+
+            <ol class="text-xs text-gray-700 space-y-2.5 mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-100 list-decimal list-inside font-medium leading-relaxed">
+                <li>Pastikan Anda sudah menekan tombol <strong class="text-emerald-700">Kirim / Submit</strong> pada formulir soal hingga muncul tulisan <em>"Jawaban Anda telah direkam"</em>.</li>
+                <li>Tekan tombol hijau <strong>Keluar dari Mode Ujian</strong> di bawah ini untuk membuka kunci layar penuh.</li>
+                <li>Tutup tab browser atau tekan tombol <strong>Home</strong> pada HP Anda.</li>
+            </ol>
+
+            <div class="space-y-2.5">
+                <button type="button" id="btn-konfirmasi-keluar" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl shadow-md transition-all text-sm">
+                    Keluar dari Mode Ujian
+                </button>
+                <button type="button" id="btn-batal-keluar" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-2xl transition-all text-xs">
+                    Belum Selesai, Kembali ke Soal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HALAMAN SELESAI (SETELAH KELUAR DENGAN AMAN) -->
+    <div id="finished-screen" class="hidden fixed inset-0 elegant-bg z-[200] flex items-center justify-center p-6 text-center">
+        <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full border border-emerald-100">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 text-emerald-600 mb-5">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-extrabold text-gray-900 mb-2">Ujian Selesai</h1>
+            <p class="text-sm text-gray-600 mb-6 font-medium leading-relaxed">Terima kasih telah mengikuti ujian dengan jujur di <strong>SMK AL IKHLAS LONG KALI</strong>.</p>
+            <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/70">
+                <p class="text-xs text-emerald-800 font-semibold">Mode anti-contek sudah dinonaktifkan. Anda sekarang dapat menutup tab browser ini dengan aman.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN PELANGGARAN -->
     <div id="warning-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
         <div id="warning-box" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4">
             <div id="warning-icon-bg" class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-5">
@@ -180,113 +236,8 @@
         const maxPelanggaran = 3;
         let linkSoal = "";
 
-        // Ambil parameter link soal dari URL
         const urlParams = new URLSearchParams(window.location.search);
         linkSoal = urlParams.get('soal');
 
         const btnMulai = document.getElementById('btn-mulai');
-        const btnTutupPeringatan = document.getElementById('warning-btn');
-
-        // Jika link ?soal= tidak ada di URL
-        if (!linkSoal) {
-            document.getElementById('error-link').classList.remove('hidden');
-            btnMulai.disabled = true;
-            btnMulai.className = "w-full bg-gray-300 text-gray-500 font-bold py-4 rounded-2xl text-base uppercase tracking-widest cursor-not-allowed";
-        } else {
-            // Pasang event klik langsung pada tombol
-            btnMulai.addEventListener('click', function() {
-                const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                document.getElementById('watermark-text').innerHTML = `SMK AL IKHLAS<br>LONG KALI<br><span style="font-size: 1.4rem">${tanggal}</span>`;
-
-                document.getElementById('form-iframe').src = linkSoal;
-                document.getElementById('start-screen').classList.add('hidden');
-                document.getElementById('exam-screen').classList.remove('hidden');
-                
-                try {
-                    const el = document.documentElement;
-                    if (el.requestFullscreen) {
-                        el.requestFullscreen().catch(() => {});
-                    } else if (el.webkitRequestFullscreen) { 
-                        el.webkitRequestFullscreen();
-                    }
-                } catch (e) {}
-
-                isExamRunning = true;
-            });
-        }
-
-        btnTutupPeringatan.addEventListener('click', function() {
-            document.getElementById('warning-modal').classList.add('hidden');
-            try {
-                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen().catch(() => {});
-                }
-            } catch (e) {}
-        });
-
-        function catatPelanggaran(alasan) {
-            if (!isExamRunning) return; 
-
-            pelanggaran++;
-            const overlay = document.getElementById('violation-overlay');
-            const badge = document.getElementById('status-badge');
-            const warningBox = document.getElementById('warning-box');
-            const warningIconBg = document.getElementById('warning-icon-bg');
-            const warningIcon = document.getElementById('warning-icon');
-            
-            if (pelanggaran === 1) {
-                overlay.className = "violation-overlay status-orange";
-                badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-orange-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
-                badge.innerText = "⚠️ PELANGGARAN 1/3 (ORANYE)";
-                badge.classList.remove('hidden');
-
-                warningBox.className = "bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-orange-500";
-                warningIconBg.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-orange-100 mb-5";
-                warningIcon.className = "w-10 h-10 text-orange-600";
-                btnTutupPeringatan.className = "w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-base";
-
-                document.getElementById('warning-title').innerText = "Peringatan 1 dari 3";
-                document.getElementById('warning-message').innerText = `Sistem mendeteksi Anda ${alasan}. Layar Anda kini berubah menjadi ORANYE sebagai tanda pengawasan!`;
-                document.getElementById('warning-modal').classList.remove('hidden');
-
-            } else if (pelanggaran === 2) {
-                overlay.className = "violation-overlay status-soft-red";
-                badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-rose-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
-                badge.innerText = "🚨 PELANGGARAN 2/3 (PERINGATAN TERAKHIR)";
-                badge.classList.remove('hidden');
-
-                warningBox.className = "bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-rose-400";
-                warningIconBg.className = "mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-rose-100 mb-5";
-                warningIcon.className = "w-10 h-10 text-rose-500";
-                btnTutupPeringatan.className = "w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-base";
-
-                document.getElementById('warning-title').innerText = "Peringatan 2 dari 3";
-                document.getElementById('warning-message').innerText = `Anda kembali ${alasan}. Layar berubah menjadi MERAH SOFT. Satu kali lagi pelanggaran akan langsung mendiskualifikasi ujian Anda!`;
-                document.getElementById('warning-modal').classList.remove('hidden');
-
-            } else if (pelanggaran >= maxPelanggaran) {
-                document.getElementById('exam-screen').classList.add('hidden'); 
-                document.getElementById('warning-modal').classList.add('hidden');
-                document.getElementById('disqualified-screen').classList.remove('hidden');
-                isExamRunning = false;
-            }
-        }
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-                catatPelanggaran("berpindah tab atau aplikasi");
-            }
-        });
-
-        window.addEventListener("blur", () => {
-            setTimeout(() => {
-                if (document.activeElement !== document.getElementById('form-iframe')) {
-                    catatPelanggaran("keluar dari area ujian");
-                }
-            }, 200);
-        });
-
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-    </script>
-</body>
-</html>
+        const btnTutupPeringatan = document.getElement
