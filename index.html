@@ -26,7 +26,7 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none; 
-            z-index: 50;
+            z-index: 40;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -42,6 +42,27 @@
             line-height: 1.3;
         }
 
+        /* Lapisan Indikator Warna Pelanggaran (Tetap bisa klik soal di bawahnya) */
+        .violation-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 45;
+            transition: all 0.4s ease;
+        }
+
+        /* Pelanggaran 1: Oranye */
+        .status-orange {
+            background-color: rgba(249, 115, 22, 0.25);
+            box-shadow: inset 0 0 0 12px #f97316;
+        }
+
+        /* Pelanggaran 2: Merah Soft */
+        .status-soft-red {
+            background-color: rgba(244, 63, 94, 0.30);
+            box-shadow: inset 0 0 0 14px #fb7185;
+        }
+
         .elegant-bg {
             background: radial-gradient(circle at top right, #ecfdf5 0%, #f8fafc 45%, #e2e8f0 100%);
         }
@@ -53,7 +74,6 @@
     <div id="start-screen" class="flex-1 flex items-center justify-center p-4">
         <div class="bg-white/95 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-[0_20px_50px_rgba(6,95,70,0.12)] max-w-md w-full border border-emerald-100/80 relative overflow-hidden">
             
-            <!-- Aksen Garis Atas Hijau -->
             <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600"></div>
 
             <!-- Logo Sekolah dari GitHub -->
@@ -85,7 +105,7 @@
                     <div>
                         <h3 class="text-xs font-extrabold text-amber-900 uppercase tracking-wider mb-1">Perhatian & Tata Tertib</h3>
                         <p class="text-xs text-amber-800 leading-relaxed font-medium">
-                            Dilarang keluar dari layar ujian, berpindah tab, atau membuka aplikasi lain. Jika melanggar hingga <span class="font-bold underline text-red-700">3 kali</span>, sistem otomatis mendiskualifikasi ujian Anda.
+                            Dilarang keluar dari layar ujian atau berpindah tab. Pelanggaran akan mengubah warna layar Anda dan jika mencapai <span class="font-bold underline text-red-700">3 kali</span>, ujian otomatis dibatalkan.
                         </p>
                     </div>
                 </div>
@@ -116,132 +136,42 @@
     <div id="exam-screen" class="hidden relative w-full h-full bg-white">
         <iframe id="form-iframe" class="w-full h-full border-none absolute top-0 left-0" src=""></iframe>
         
+        <!-- Watermark -->
         <div class="watermark-container">
             <div id="watermark-text" class="watermark-text"></div>
+        </div>
+
+        <!-- Lapisan Perubahan Warna Pelanggaran -->
+        <div id="violation-overlay" class="violation-overlay"></div>
+
+        <!-- Badge Status Pelanggaran di Atas Layar (Muncul saat pelanggaran 1 & 2) -->
+        <div id="status-badge" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full text-white font-extrabold text-xs tracking-wider shadow-lg uppercase">
         </div>
     </div>
 
     <!-- MODAL PERINGATAN -->
     <div id="warning-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border border-red-100">
-            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-50 border-4 border-red-100 mb-5">
-                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="warning-box" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4">
+            <div id="warning-icon-bg" class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-5">
+                <svg id="warning-icon" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
             <h3 class="text-2xl font-extrabold text-gray-900 mb-2" id="warning-title">Peringatan!</h3>
             <p class="text-sm text-gray-600 mb-8 font-medium leading-relaxed" id="warning-message"></p>
-            <button onclick="tutupPeringatan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-red-600/30 transition-all text-base">
+            <button id="warning-btn" onclick="tutupPeringatan()" class="w-full text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-base">
                 Kembali ke Ujian
             </button>
         </div>
     </div>
 
-    <!-- HALAMAN DISKUALIFIKASI -->
-    <div id="disqualified-screen" class="hidden fixed inset-0 bg-gradient-to-br from-red-600 to-rose-800 z-[200] flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full">
-            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-50 border-4 border-red-100 mb-6">
+    <!-- HALAMAN DISKUALIFIKASI (PELANGGARAN 3: MERAH BANGET) -->
+    <div id="disqualified-screen" class="hidden fixed inset-0 bg-red-600 z-[200] flex items-center justify-center p-6 text-center">
+        <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full border-4 border-red-800">
+            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-100 border-4 border-red-500 mb-6 animate-bounce">
                 <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </div>
             <h1 class="text-3xl font-black text-red-600 mb-3 tracking-tight">DIDISKUALIFIKASI</h1>
-            <p class="text-gray-700 mb-6 font-semibold text-base leading-relaxed">Anda telah keluar dari layar ujian sebanyak 3 kali.</p>
-            <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200/80">
-                <p class="text-xs text-gray-500 font-medium leading-relaxed">Akses ujian ditutup otomatis oleh sistem SMK AL IKHLAS LONG KALI. Silakan lapor kepada pengawas ruangan.</p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let isExamRunning = false;
-        let pelanggaran = 0;
-        const maxPelanggaran = 3;
-        let linkSoal = "";
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            linkSoal = urlParams.get('soal');
-            
-            if (!linkSoal) {
-                document.getElementById('error-link').classList.remove('hidden');
-                const btn = document.getElementById('btn-mulai');
-                btn.disabled = true;
-                btn.classList.remove('from-emerald-600', 'to-green-600', 'hover:from-emerald-700', 'hover:to-green-700', 'hover:-translate-y-0.5', 'shadow-[0_8px_20px_rgba(5,150,105,0.3)]');
-                btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-            }
-        });
-
-        function mulaiUjian() {
-            const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('watermark-text').innerHTML = `SMK AL IKHLAS<br>LONG KALI<br><span style="font-size: 1.4rem">${tanggal}</span>`;
-
-            document.getElementById('form-iframe').src = linkSoal;
-
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('exam-screen').classList.remove('hidden');
-            
-            const el = document.documentElement;
-            if (el.requestFullscreen) {
-                el.requestFullscreen().catch(err => console.log("Fullscreen ditolak"));
-            } else if (el.webkitRequestFullscreen) { 
-                el.webkitRequestFullscreen();
-            }
-
-            isExamRunning = true;
-        }
-
-        function catatPelanggaran(alasan) {
-            if (!isExamRunning) return; 
-
-            pelanggaran++;
-            
-            if (pelanggaran >= maxPelanggaran) {
-                document.getElementById('exam-screen').classList.add('hidden'); 
-                document.getElementById('warning-modal').classList.add('hidden');
-                document.getElementById('disqualified-screen').classList.remove('hidden');
-                isExamRunning = false;
-            } else {
-                document.getElementById('warning-title').innerText = `Peringatan ${pelanggaran} dari ${maxPelanggaran}`;
-                document.getElementById('warning-message').innerText = `Sistem mendeteksi Anda ${alasan}. Jika mencapai ${maxPelanggaran} kali, ujian otomatis dibatalkan!`;
-                document.getElementById('warning-modal').classList.remove('hidden');
-            }
-        }
-
-        function tutupPeringatan() {
-            document.getElementById('warning-modal').classList.add('hidden');
-            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(e => {});
-            }
-        }
-
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-                catatPelanggaran("berpindah tab atau aplikasi");
-            }
-        });
-
-        window.addEventListener("blur", () => {
-            setTimeout(() => {
-                if (document.activeElement !== document.getElementById('form-iframe')) {
-                    catatPelanggaran("keluar dari area ujian");
-                }
-            }, 200);
-        });
-
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12' || e.key === 'F11') {
-                e.preventDefault();
-            }
-            if (e.ctrlKey || e.metaKey) {
-                const blockedKeys = ['c', 'v', 'u', 'p', 's', 'x'];
-                if (blockedKeys.includes(e.key.toLowerCase())) {
-                    e.preventDefault();
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+            <p class="text-gray-800 mb-6 font-bold text-base leading-relaxed">Layar Merah:
