@@ -7,13 +7,15 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Ujian Aman">
+    <meta name="apple-mobile-web-app-title" content="Ujian SMKS Al Ikhlas">
     
-    <title>Aplikasi Ujian Anti-Contek</title>
+    <title>Portal Ujian - SMKS AL IKHLAS LONG KALI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -31,45 +33,65 @@
             overflow: hidden;
         }
         .watermark-text {
-            color: rgba(0, 0, 0, 0.15); 
-            font-size: 2.5rem;
-            font-weight: bold;
+            color: rgba(0, 0, 0, 0.08); 
+            font-size: 3rem;
+            font-weight: 800;
             text-align: center;
             transform: rotate(-35deg);
             white-space: pre-line;
+            line-height: 1.2;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
         }
     </style>
 </head>
-<body class="bg-gray-100 h-screen w-screen flex flex-col font-sans">
+<body class="gradient-bg h-screen w-screen flex flex-col">
 
     <!-- HALAMAN AWAL -->
     <div id="start-screen" class="flex-1 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-blue-700">Ujian Sekolah</h1>
-                <p class="text-gray-500 text-sm mt-1">Sistem Anti-Contek Aktif</p>
+        <div class="bg-white p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-w-md w-full border border-gray-100">
+            
+            <!-- Tempat Logo Sekolah -->
+            <div class="flex justify-center mb-4">
+                <!-- Hapus class 'hidden' pada tag <img> jika Anda sudah mengunggah file logo.png ke GitHub -->
+                <img src="logo.png" alt="Logo Sekolah" id="logo-img" class="hidden h-24 w-24 object-contain mb-2" onerror="this.classList.add('hidden'); document.getElementById('logo-svg').classList.remove('hidden');">
+                
+                <!-- Logo Default (SVG) jika gambar logo.png belum ada -->
+                <svg id="logo-svg" class="h-20 w-20 text-blue-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 9.5v7.5a2 2 0 002 2h10a2 2 0 002-2V9.5" />
+                </svg>
+            </div>
+
+            <div class="text-center mb-8">
+                <h2 class="text-sm font-bold text-gray-400 tracking-widest uppercase mb-1">Portal Ujian Resmi</h2>
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600">SMKS AL IKHLAS</h1>
+                <h2 class="text-xl font-bold text-gray-800 mt-1">LONG KALI</h2>
+                <p class="text-gray-500 text-sm mt-3 font-medium bg-blue-50 inline-block px-3 py-1 rounded-full border border-blue-100">🛡️ Sistem Anti-Contek Aktif</p>
             </div>
             
-            <div id="error-link" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
-                Link soal tidak ditemukan! Pastikan Anda masuk melalui hasil scan QR Code.
+            <div id="error-link" class="hidden mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm text-center font-medium">
+                Link soal tidak ditemukan! Pastikan Anda masuk melalui hasil scan QR Code dari pengawas.
             </div>
 
             <div class="space-y-4">
-                <p class="text-center text-gray-700 font-medium mb-4">Silakan tekan tombol di bawah untuk masuk ke lembar soal.</p>
-                
-                <button onclick="mulaiUjian()" id="btn-mulai" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg mt-4 transition duration-200 shadow-md text-lg">
+                <button onclick="mulaiUjian()" id="btn-mulai" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition duration-300 shadow-[0_4px_14px_0_rgba(79,70,229,0.39)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.23)] hover:-translate-y-0.5 text-lg uppercase tracking-wide">
                     MULAI UJIAN
                 </button>
                 
-                <p class="text-xs text-gray-400 text-center mt-4">
-                    *Pengguna iPhone: Tekan tombol "Share" > "Add to Home Screen" sebelum klik mulai ujian.
-                </p>
+                <div class="text-center mt-6 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <p class="text-xs text-gray-500 font-medium">Khusus pengguna iPhone/iOS:</p>
+                    <p class="text-xs text-gray-400 mt-1">Gunakan fitur <span class="font-bold text-gray-600">"Add to Home Screen"</span> sebelum memulai ujian.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- HALAMAN UJIAN -->
-    <div id="exam-screen" class="hidden relative w-full h-full">
+    <div id="exam-screen" class="hidden relative w-full h-full bg-white">
         <iframe id="form-iframe" class="w-full h-full border-none absolute top-0 left-0" src=""></iframe>
         
         <div class="watermark-container">
@@ -78,16 +100,14 @@
     </div>
 
     <!-- MODAL PERINGATAN -->
-    <div id="warning-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl transform scale-105 transition-all">
-            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+    <div id="warning-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-105">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-5">
+                <span class="text-4xl">⚠️</span>
             </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2" id="warning-title">Peringatan!</h3>
-            <p class="text-sm text-gray-600 mb-6" id="warning-message"></p>
-            <button onclick="tutupPeringatan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg">
+            <h3 class="text-2xl font-extrabold text-gray-900 mb-2" id="warning-title">Peringatan!</h3>
+            <p class="text-base text-gray-600 mb-8 font-medium" id="warning-message"></p>
+            <button onclick="tutupPeringatan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition-colors text-lg">
                 Saya Mengerti
             </button>
         </div>
@@ -95,10 +115,15 @@
 
     <!-- HALAMAN DISKUALIFIKASI -->
     <div id="disqualified-screen" class="hidden fixed inset-0 bg-red-600 z-[200] flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full">
-            <h1 class="text-3xl font-bold text-red-600 mb-4">DIDISKUALIFIKASI</h1>
-            <p class="text-gray-700 mb-6 font-medium">Anda telah melanggar aturan ujian sebanyak 3 kali (keluar dari aplikasi/layar ujian). Ujian Anda dibatalkan.</p>
-            <p class="text-sm text-gray-500">Silakan melapor kepada pengawas ujian atau guru Anda.</p>
+        <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-md w-full">
+            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-100 mb-6">
+                <span class="text-5xl">🚫</span>
+            </div>
+            <h1 class="text-3xl font-black text-red-600 mb-4 tracking-tight">DIDISKUALIFIKASI</h1>
+            <p class="text-gray-700 mb-8 font-semibold text-lg leading-relaxed">Anda telah melanggar aturan ujian dengan keluar dari aplikasi sebanyak 3 kali.</p>
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p class="text-sm text-gray-500 font-medium">Ujian dibatalkan. Silakan melapor kepada pengawas atau guru di ruangan.</p>
+            </div>
         </div>
     </div>
 
@@ -115,14 +140,15 @@
             if (!linkSoal) {
                 document.getElementById('error-link').classList.remove('hidden');
                 document.getElementById('btn-mulai').disabled = true;
-                document.getElementById('btn-mulai').classList.replace('bg-blue-600', 'bg-gray-400');
+                document.getElementById('btn-mulai').classList.replace('from-blue-600', 'from-gray-400');
+                document.getElementById('btn-mulai').classList.replace('to-indigo-600', 'to-gray-500');
+                document.getElementById('btn-mulai').classList.remove('hover:from-blue-700', 'hover:to-indigo-700', 'hover:-translate-y-0.5', 'shadow-[0_4px_14px_0_rgba(79,70,229,0.39)]');
             }
         });
 
         function mulaiUjian() {
-            // Watermark diubah menjadi statis + tanggal
-            const tanggal = new Date().toLocaleDateString('id-ID');
-            document.getElementById('watermark-text').innerHTML = `UJIAN AKTIF<br>${tanggal}`;
+            const tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('watermark-text').innerHTML = `SMKS AL IKHLAS<br>LONG KALI<br><span style="font-size: 1.5rem">${tanggal}</span>`;
 
             document.getElementById('form-iframe').src = linkSoal;
 
@@ -151,7 +177,7 @@
                 isExamRunning = false;
             } else {
                 document.getElementById('warning-title').innerText = `Peringatan ${pelanggaran} dari ${maxPelanggaran}`;
-                document.getElementById('warning-message').innerText = `Sistem mendeteksi Anda: ${alasan}. Jika mencapai ${maxPelanggaran} kali, ujian otomatis dibatalkan!`;
+                document.getElementById('warning-message').innerText = `Sistem mendeteksi Anda mencoba ${alasan}. Jika mencapai ${maxPelanggaran} kali, ujian otomatis dibatalkan!`;
                 document.getElementById('warning-modal').classList.remove('hidden');
             }
         }
@@ -165,14 +191,14 @@
 
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) {
-                catatPelanggaran("Berpindah Tab atau Aplikasi");
+                catatPelanggaran("berpindah tab atau aplikasi");
             }
         });
 
         window.addEventListener("blur", () => {
             setTimeout(() => {
                 if (document.activeElement !== document.getElementById('form-iframe')) {
-                    catatPelanggaran("Keluar dari area ujian");
+                    catatPelanggaran("keluar dari area ujian");
                 }
             }, 200);
         });
