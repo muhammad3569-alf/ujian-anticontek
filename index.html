@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- Meta tags agar aplikasi menyesuaikan layar HP dan tidak bisa di-zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Meta tags untuk dukungan PWA (Fullscreen di iOS dan Android) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ujian Aman">
+    
+    <title>Aplikasi Ujian Anti-Contek</title>
+    
+    <!-- Memuat Tailwind CSS untuk tampilan UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* Mematikan fitur seleksi teks untuk mencegah Copy-Paste */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            overflow: hidden; /* Mencegah scroll di luar iframe */
+        }
+        
+        /* Desain Watermark Transparan */
+        .watermark-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none; /* Klik akan tembus ke Google Form di bawahnya */
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .watermark-text {
+            color: rgba(0, 0, 0, 0.15); /* Hitam transparan */
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            transform: rotate(-35deg);
+            white-space: pre-line;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen w-screen flex flex-col font-sans">
+
+    <!-- 1. HALAMAN AWAL (LOGIN SISWA) -->
+    <div id="start-screen" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-blue-700">Ujian Sekolah</h1>
+                <p class="text-gray-500 text-sm mt-1">Sistem Anti-Contek Aktif</p>
+            </div>
+            
+            <div id="error-link" class="hidden mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
+                Link soal tidak ditemukan! Pastikan Anda masuk melalui hasil scan QR Code.
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Nama Lengkap</label>
+                    <input type="text" id="input-nama" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan nama Anda" autocomplete="off">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">NIS / No. Peserta</label>
+                    <input type="text" id="input-nis" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan NIS Anda" autocomplete="off">
+                </div>
+                <button onclick="mulaiUjian()" id="btn-mulai" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg mt-4 transition duration-200 shadow-md">
+                    Mulai Ujian
+                </button>
+                
+                <!-- Petunjuk Khusus Pengguna iPhone -->
+                <p class="text-xs text-gray-400 text-center mt-4">
+                    *Pengguna iPhone: Tekan tombol "Share" > "Add to Home Screen" sebelum mulai ujian.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. HALAMAN UJIAN (GOOGLE FORM + WATERMARK) -->
+    <div id="exam-screen" class="hidden relative w-full h-full">
+        <!-- Iframe Google Form -->
+        <iframe id="form-iframe" class="w-full h-full border-none absolute top-0 left-0" src=""></iframe>
+        
+        <!-- Watermark Anti-Foto -->
+        <div class="watermark-container">
+            <div id="watermark-text" class="watermark-text"></div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL PERINGATAN (PELANGGARAN) -->
+    <div id="warning-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl transform scale-105 transition-all">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2" id="warning-title">Peringatan!</h3>
+            <p class="text-sm text-gray-600 mb-6" id="warning-message"></p>
+            <button onclick="tutupPeringatan()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg">
+                Saya Mengerti
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. HALAMAN DISKUALIFIKASI -->
+    <div id="disqualified-screen" class="hidden fixed inset-0 bg-red-600 z-[200] flex items-center justify-center p-6 text-center">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full">
+            <h1 class="text-3xl font-bold text-red-600 mb-4">DIDISKUALIFIKASI</h1>
+            <p class="text-gray-700 mb-6 font-medium">Anda telah melanggar aturan ujian sebanyak 3 kali (keluar dari aplikasi/layar ujian). Ujian Anda dibatalkan.</p>
+            <p class="text-sm text-gray-500">Silakan melapor kepada pengawas ujian atau guru Anda.</p>
+        </div>
+    </div>
+
+    <!-- KODE JAVASCRIPT -->
+    <script>
+        // Variabel Sistem
+        let isExamRunning = false;
+        let pelanggaran = 0;
+        const maxPelanggaran = 3;
+        let linkSoal = "";
+
+        // Menangkap Parameter URL saat web dimuat (misal: ?soal=https://docs.google.com/...)
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            linkSoal = urlParams.get('soal');
+            
+            if (!linkSoal) {
+                document.getElementById('error-link').classList.remove('hidden');
+                document.getElementById('btn-mulai').disabled = true;
+                document.getElementById('btn-mulai').classList.replace('bg-blue-600', 'bg-gray-400');
+            }
+        });
+
+        // Fungsi Memulai Ujian
+        function mulaiUjian() {
+            const nama = document.getElementById('input-nama').value.trim();
+            const nis = document.getElementById('input-nis').value.trim();
+
+            if (!nama || !nis) {
+                alert("Harap isi Nama dan NIS terlebih dahulu!");
+                return;
+            }
+
+            // Atur Watermark
+            const tanggal = new Date().toLocaleDateString('id-ID');
+            document.getElementById('watermark-text').innerHTML = `${nama}<br>${nis}<br>${tanggal}`;
+
+            // Masukkan link soal ke Iframe
+            document.getElementById('form-iframe').src = linkSoal;
+
+            // Transisi Layar
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            
+            // Masuk Mode Fullscreen (Mendukung Android & Desktop)
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(err => console.log("Fullscreen ditolak"));
+            } else if (el.webkitRequestFullscreen) { /* Safari */
+                el.webkitRequestFullscreen();
+            }
+
+            isExamRunning = true;
+        }
+
+        // Fungsi Menangani Pelanggaran
+        function catatPelanggaran(alasan) {
+            if (!isExamRunning) return; // Abaikan jika ujian belum mulai
+
+            pelanggaran++;
+            
+            if (pelanggaran >= maxPelanggaran) {
+                // Diskualifikasi
+                document.getElementById('exam-screen').classList.add('hidden'); // Sembunyikan Soal
+                document.getElementById('warning-modal').classList.add('hidden');
+                document.getElementById('disqualified-screen').classList.remove('hidden');
+                isExamRunning = false;
+            } else {
+                // Tampilkan Peringatan
+                document.getElementById('warning-title').innerText = `Peringatan ${pelanggaran} dari ${maxPelanggaran}`;
+                document.getElementById('warning-message').innerText = `Sistem mendeteksi Anda: ${alasan}. Jika mencapai ${maxPelanggaran} kali, ujian otomatis dibatalkan!`;
+                document.getElementById('warning-modal').classList.remove('hidden');
+            }
+        }
+
+        // Tutup Modal Peringatan
+        function tutupPeringatan() {
+            document.getElementById('warning-modal').classList.add('hidden');
+            // Kembalikan ke fullscreen jika keluar
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => {});
+            }
+        }
+
+        // --- SISTEM SENSOR ANTI-CONTEK ---
+
+        // 1. Deteksi Pindah Tab atau Aplikasi di Minimize
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                catatPelanggaran("Berpindah Tab atau Aplikasi");
+            }
+        });
+
+        // 2. Deteksi Layar Kehilangan Fokus (Split Screen / Pop-up Notifikasi ditekan)
+        window.addEventListener("blur", () => {
+            // Memberi jeda sedikit agar tidak salah deteksi saat klik di dalam iframe
+            setTimeout(() => {
+                if (document.activeElement !== document.getElementById('form-iframe')) {
+                    catatPelanggaran("Keluar dari area ujian");
+                }
+            }, 200);
+        });
+
+        // 3. Blokir Klik Kanan
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // 4. Blokir Tombol Shortcut Keyboard (Desktop / Tablet Fisik)
+        document.addEventListener('keydown', (e) => {
+            // Blokir F12, F11
+            if (e.key === 'F12' || e.key === 'F11') {
+                e.preventDefault();
+            }
+            // Blokir Ctrl+C, Ctrl+V, Ctrl+U, Ctrl+P, Ctrl+S
+            if (e.ctrlKey || e.metaKey) {
+                const blockedKeys = ['c', 'v', 'u', 'p', 's', 'x'];
+                if (blockedKeys.includes(e.key.toLowerCase())) {
+                    e.preventDefault();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
