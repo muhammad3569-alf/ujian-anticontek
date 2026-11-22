@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- PERBAIKAN: zoom tidak lagi dikunci agar siswa bisa memperbesar teks soal -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,6 +21,18 @@
             -webkit-user-select: none;
             -moz-user-select: none;
             overflow: hidden; 
+        }
+
+        /* PERBAIKAN: tinggi layar mengikuti area yang benar-benar terlihat di HP (tidak terpotong address bar) */
+        body.elegant-bg {
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        /* PERBAIKAN: kolom isian tetap bisa diketik (di iOS user-select:none membuat input tidak bisa diisi) */
+        input {
+            user-select: text;
+            -webkit-user-select: text;
         }
         
         .watermark-container {
@@ -75,7 +88,7 @@
 <body class="elegant-bg h-screen w-screen flex flex-col">
 
     <!-- HALAMAN AWAL -->
-    <div id="start-screen" class="flex-1 flex items-center justify-center p-4">
+    <div id="start-screen" class="flex-1 flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white/95 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-[0_20px_50px_rgba(6,95,70,0.12)] max-w-md w-full border border-emerald-100/80 relative overflow-hidden">
             
             <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600"></div>
@@ -114,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Pesan Error Link -->
             <div id="error-link" class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs text-center font-semibold">
                 Link soal tidak ditemukan! Pastikan Anda masuk melalui hasil scan QR Code resmi dari pengawas.
@@ -224,7 +237,7 @@
     </div>
 
     <!-- HALAMAN DISKUALIFIKASI -->
-    <div id="disqualified-screen" class="hidden fixed inset-0 bg-red-600 z-[200] flex items-center justify-center p-6 text-center">
+    <div id="disqualified-screen" class="hidden fixed inset-0 bg-red-600 z-[200] flex items-center justify-center p-6 text-center overflow-y-auto">
         <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full border-4 border-red-800">
             <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-100 border-4 border-red-500 mb-6 animate-bounce">
                 <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,14 +249,44 @@
             <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
                 <p class="text-xs text-red-700 font-semibold leading-relaxed">Akses ujian ditutup otomatis oleh sistem SMK AL IKHLAS LONG KALI. Silakan angkat tangan dan lapor kepada pengawas ruangan.</p>
             </div>
+
+            <!-- BARU: Buka kunci oleh pengawas (jika terjadi salah deteksi) -->
+            <div class="mt-6 pt-5 border-t border-gray-200 text-left">
+                <p class="text-[11px] font-extrabold text-gray-500 uppercase tracking-wider mb-2">Khusus Pengawas</p>
+                <div class="flex gap-2">
+                    <input type="password" id="pin-input" autocomplete="off" placeholder="PIN pengawas"
+                        class="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-300">
+                    <button type="button" onclick="bukaKunciPengawas()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 rounded-xl">Buka</button>
+                </div>
+                <p id="pin-error" class="hidden text-xs text-red-600 font-semibold mt-2">PIN salah.</p>
+            </div>
         </div>
     </div>
 
     <script>
+        /* ====== PENGATURAN (isi sesuai kebutuhan) ====== */
+        // URL Web App Google Apps Script untuk mencatat pelanggaran. Kosongkan jika belum dipakai.
+        var URL_LOG = '';
+        // PIN yang dipegang pengawas untuk membuka kunci siswa yang terdiskualifikasi. GANTI sebelum dipakai.
+        var PIN_PENGAWAS = '123456';
+        /* =============================================== */
+
         var isExamRunning = false;
-        var pelanggaran = 0;
         var maxPelanggaran = 3;
         var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        var kodePerangkat = '';       // kode acak per perangkat, untuk mencocokkan log dengan siswa (nama sudah ada di Google Form)
+        var sedangKeluar = false;     // penanda: siswa sedang berada di luar layar ujian (agar 1 kejadian hanya dihitung 1 kali)
+        var lastViolationAt = 0;
+
+        // Penyimpanan lokal yang aman (tidak error di mode privat)
+        function bacaLokal(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function simpanLokal(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+        function hashSederhana(s) {
+            var h = 0;
+            for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+            return Math.abs(h).toString(36);
+        }
 
         function ambilLinkSoal() {
             var search = window.location.search;
@@ -259,12 +302,62 @@
 
         var linkSoalFinal = ambilLinkSoal();
 
+        // PERBAIKAN: jumlah pelanggaran disimpan, jadi tidak hilang saat halaman di-refresh
+        var KEY = 'ujian_' + hashSederhana(linkSoalFinal);
+        var pelanggaran = parseInt(bacaLokal(KEY + '_pel') || '0', 10) || 0;
+
         // Cek ketersediaan link saat halaman dibuka
         if (!linkSoalFinal) {
             document.getElementById('error-link').classList.remove('hidden');
             var btn = document.getElementById('btn-mulai');
             btn.disabled = true;
             btn.className = "w-full bg-gray-300 text-gray-500 font-bold py-4 rounded-2xl text-base uppercase tracking-widest cursor-not-allowed";
+        }
+
+        (function() {
+            // Buat / ambil kode perangkat
+            kodePerangkat = bacaLokal('ujian_kode_perangkat') || '';
+            if (!kodePerangkat) {
+                kodePerangkat = Math.random().toString(36).substring(2, 8).toUpperCase();
+                simpanLokal('ujian_kode_perangkat', kodePerangkat);
+            }
+
+            // Jika sudah terdiskualifikasi sebelumnya (mis. siswa refresh), langsung tampilkan layar diskualifikasi
+            if (pelanggaran >= maxPelanggaran) {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('disqualified-screen').classList.remove('hidden');
+            }
+        })();
+
+        // Catat kejadian ke Google Sheets (jika URL_LOG diisi)
+        function kirimLog(aksi, alasan) {
+            if (!URL_LOG) return;
+            try {
+                fetch(URL_LOG, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ kode: kodePerangkat, aksi: aksi, jumlah: pelanggaran, alasan: alasan || '' })
+                });
+            } catch (e) {}
+        }
+
+        // Pasang kembali warna layar sesuai jumlah pelanggaran yang tersimpan (setelah refresh)
+        function pulihkanWarna() {
+            var overlay = document.getElementById('violation-overlay');
+            var badge = document.getElementById('status-badge');
+            if (pelanggaran === 1) {
+                overlay.className = "violation-overlay status-orange";
+                badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-orange-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
+                badge.innerText = "⚠️ PELANGGARAN 1/3 (ORANYE)";
+            } else if (pelanggaran === 2) {
+                overlay.className = "violation-overlay status-soft-red";
+                badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-rose-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
+                badge.innerText = "🚨 PELANGGARAN 2/3 (PERINGATAN TERAKHIR)";
+            } else {
+                overlay.className = "violation-overlay";
+                badge.className = "hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
+            }
         }
 
         function mulaiUjianSekarang() {
@@ -279,6 +372,10 @@
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('exam-screen').classList.remove('hidden');
             document.getElementById('form-iframe').src = linkSoalFinal;
+
+            pulihkanWarna();
+            sedangKeluar = false;
+            kirimLog('MULAI', '');
             
             if (!isIOS) {
                 try {
@@ -306,6 +403,7 @@
 
         function konfirmasiKeluarUjian() {
             isExamRunning = false;
+            kirimLog('SELESAI', '');
             document.getElementById('finish-guide-modal').classList.add('hidden');
             document.getElementById('exam-screen').classList.add('hidden');
             document.getElementById('finished-screen').classList.remove('hidden');
@@ -335,7 +433,15 @@
         function catatPelanggaran(alasan) {
             if (!isExamRunning) return; 
 
+            // PERBAIKAN: jeda minimum agar satu kejadian tidak terhitung ganda
+            var sekarang = Date.now();
+            if (sekarang - lastViolationAt < 1500) return;
+            lastViolationAt = sekarang;
+
             pelanggaran++;
+            simpanLokal(KEY + '_pel', pelanggaran);
+            kirimLog(pelanggaran >= maxPelanggaran ? 'DISKUALIFIKASI' : 'PELANGGARAN', alasan);
+
             var overlay = document.getElementById('violation-overlay');
             var badge = document.getElementById('status-badge');
             var warningBox = document.getElementById('warning-box');
@@ -382,19 +488,58 @@
             }
         }
 
+        // Satu pintu untuk semua deteksi "keluar": selama siswa masih di luar, hanya dihitung 1 kali
+        function cekKeluar(alasan) {
+            if (!isExamRunning || sedangKeluar) return;
+            sedangKeluar = true;
+            catatPelanggaran(alasan);
+        }
+
+        // PERBAIKAN: pemeriksaan fokus berkala. document.hasFocus() tetap true saat siswa mengetik di dalam form (iframe),
+        // tetapi false saat pindah ke aplikasi/jendela lain (termasuk split-screen dan jendela mengambang).
+        setInterval(function() {
+            if (!isExamRunning) return;
+            if (document.hidden) {
+                cekKeluar("berpindah tab atau aplikasi");
+            } else if (!document.hasFocus()) {
+                cekKeluar("keluar dari area ujian");
+            } else {
+                sedangKeluar = false;   // siswa sudah kembali
+            }
+        }, 1000);
+
         document.addEventListener("visibilitychange", function() {
             if (document.hidden) {
-                catatPelanggaran("berpindah tab atau aplikasi");
+                cekKeluar("berpindah tab atau aplikasi");
             }
         });
 
-        window.addEventListener("blur", function() {
-            setTimeout(function() {
-                if (document.activeElement !== document.getElementById('form-iframe')) {
-                    catatPelanggaran("keluar dari area ujian");
-                }
-            }, 200);
-        });
+        // BARU: keluar dari layar penuh (mis. menekan Esc) juga dihitung
+        function cekFullscreen() {
+            if (!isExamRunning || isIOS) return;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                cekKeluar("keluar dari mode layar penuh");
+            }
+        }
+        document.addEventListener("fullscreenchange", cekFullscreen);
+        document.addEventListener("webkitfullscreenchange", cekFullscreen);
+
+        // BARU: pengawas membuka kunci siswa yang terdiskualifikasi (misalnya karena salah deteksi)
+        function bukaKunciPengawas() {
+            var pinInput = document.getElementById('pin-input');
+            if (pinInput.value === PIN_PENGAWAS) {
+                pelanggaran = 0;
+                simpanLokal(KEY + '_pel', 0);
+                kirimLog('DIBUKA PENGAWAS', '');
+                pinInput.value = '';
+                document.getElementById('pin-error').classList.add('hidden');
+                document.getElementById('disqualified-screen').classList.add('hidden');
+                document.getElementById('start-screen').classList.remove('hidden');
+                pulihkanWarna();
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+            }
+        }
 
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     </script>
