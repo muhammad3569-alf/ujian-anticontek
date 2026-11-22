@@ -349,7 +349,7 @@
             if (pelanggaran === 1) {
                 overlay.className = "violation-overlay status-orange";
                 badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-orange-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
-                badge.innerText = "⚠️ PELANGGARAN 1/3 (ORANYE)";
+                badge.innerText = "⚠️ PELANGGARAN 1/3";
             } else if (pelanggaran === 2) {
                 overlay.className = "violation-overlay status-soft-red";
                 badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-rose-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
@@ -461,7 +461,7 @@
                 btnTutupPeringatan.className = "w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-base";
 
                 document.getElementById('warning-title').innerText = "Peringatan 1 dari 3";
-                document.getElementById('warning-message').innerText = "Sistem mendeteksi Anda " + alasan + ". Layar Anda kini berubah menjadi ORANYE sebagai tanda pengawasan!";
+                document.getElementById('warning-message').innerText = "Sistem mendeteksi Anda " + alasan + ". Layar Anda kini diberi tanda khusus yang terlihat oleh pengawas!";
                 document.getElementById('warning-modal').classList.remove('hidden');
 
             } else if (pelanggaran === 2) {
@@ -476,7 +476,7 @@
                 btnTutupPeringatan.className = "w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition-all text-base";
 
                 document.getElementById('warning-title').innerText = "Peringatan 2 dari 3";
-                document.getElementById('warning-message').innerText = "Anda kembali " + alasan + ". Layar berubah menjadi MERAH SOFT. Satu kali lagi pelanggaran akan langsung mendiskualifikasi ujian Anda!";
+                document.getElementById('warning-message').innerText = "Anda kembali " + alasan + ". Layar kini bertanda MERAH sebagai peringatan terakhir. Satu kali lagi pelanggaran akan langsung mendiskualifikasi ujian Anda!";
                 document.getElementById('warning-modal').classList.remove('hidden');
 
             } else if (pelanggaran >= maxPelanggaran) {
