@@ -542,6 +542,21 @@
         }
 
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        /* ====== WAKE LOCK: menjaga layar HP tetap menyala selama ujian ====== */
+var wakeLock = null;
+var wlMeminta = false;
+setInterval(function() {
+    if (!('wakeLock' in navigator)) return;
+    if (isExamRunning && !document.hidden && !wlMeminta && (!wakeLock || wakeLock.released)) {
+        wlMeminta = true;
+        navigator.wakeLock.request('screen')
+            .then(function(l) { wakeLock = l; wlMeminta = false; })
+            .catch(function() { wlMeminta = false; });
+    } else if (!isExamRunning && wakeLock && !wakeLock.released) {
+        wakeLock.release().catch(function() {});
+        wakeLock = null;
+    }
+}, 1500);
     </script>
 </body>
 </html>
