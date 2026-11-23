@@ -64,18 +64,22 @@
         }
 
         .status-orange {
-    background-color: rgba(245, 158, 11, 0.25);
-    box-shadow: inset 0 0 0 12px #f59e0b;
-}
+            background-color: rgba(245, 158, 11, 0.25);
+            box-shadow: inset 0 0 0 12px #f59e0b;
+        }
 
-.status-soft-red {
-    background-color: rgba(220, 38, 38, 0.30);
-    box-shadow: inset 0 0 0 20px #dc2626;
-}
+        .status-soft-red {
+            background-color: rgba(220, 38, 38, 0.30);
+            box-shadow: inset 0 0 0 20px #dc2626;
+        }
 
         .elegant-bg {
             background: radial-gradient(circle at top right, #ecfdf5 0%, #f8fafc 45%, #e2e8f0 100%);
         }
+
+        /* Timer pengerjaan */
+        .timer-menipis { background-color: #dc2626 !important; animation: berkedip 1s infinite; }
+        @keyframes berkedip { 50% { opacity: 0.55; } }
 
         .iframe-wrapper {
             width: 100%;
@@ -131,10 +135,6 @@
             <!-- Pesan Error Link -->
             <div id="error-link" class="hidden mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs text-center font-semibold">
                 Link soal tidak ditemukan! Pastikan Anda masuk melalui hasil scan QR Code resmi dari pengawas.
-                <div class="mt-4 pt-4 border-t border-emerald-100 text-center">
-                <p class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Dikembangkan oleh</p>
-                <p class="text-sm font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 via-green-600 to-teal-700 mt-0.5">M.A.R</p>
-            </div>
             </div>
 
             <!-- Tombol Mulai (Menggunakan onclick langsung agar pasti merespons di semua browser) -->
@@ -150,7 +150,8 @@
             <p class="text-[11px] text-gray-400 text-center mt-6 font-medium">
                 Pastikan koneksi internet stabil sebelum menekan tombol mulai.
             </p>
-             <div class="mt-4 pt-4 border-t border-emerald-100 text-center">
+
+            <div class="mt-4 pt-4 border-t border-emerald-100 text-center">
                 <p class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">Dikembangkan oleh</p>
                 <p class="text-sm font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-700 via-green-600 to-teal-700 mt-0.5">M.A.R</p>
             </div>
@@ -169,14 +170,16 @@
 
         <div id="violation-overlay" class="violation-overlay"></div>
 
+        <div id="timer-badge" class="hidden fixed top-2 left-2 z-50 px-3 py-1.5 rounded-full bg-slate-800/85 text-white font-extrabold text-xs tracking-wider shadow-lg">⏱ --:--</div>
+
         <div id="status-badge" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full text-white font-extrabold text-xs tracking-wider shadow-lg uppercase"></div>
 
         <!-- Tombol Bantuan Keluar -->
-        <button type="button" onclick="bukaPetunjukKeluar()" class="fixed bottom-3 right-3 z-50 bg-slate-800/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm border border-slate-600/50 flex items-center gap-1.5 transition-all cursor-pointer">
+        <button type="button" id="btn-selesai" onclick="bukaPetunjukKeluar()" class="disabled:opacity-60 disabled:cursor-not-allowed fixed bottom-3 right-3 z-50 bg-slate-800/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg backdrop-blur-sm border border-slate-600/50 flex items-center gap-1.5 transition-all cursor-pointer">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
-            <span>Sudah Selesai?</span>
+            <span id="teks-selesai">Sudah Selesai?</span>
         </button>
     </div>
 
@@ -228,6 +231,15 @@
         </div>
     </div>
 
+    <!-- HALAMAN WAKTU HABIS -->
+    <div id="timeup-screen" class="hidden fixed inset-0 elegant-bg z-[200] flex items-center justify-center p-6 text-center">
+        <div class="bg-white p-8 sm:p-10 rounded-3xl shadow-2xl max-w-md w-full border border-amber-200">
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-amber-100 mb-5 text-4xl">⏱</div>
+            <h1 class="text-2xl font-extrabold text-gray-900 mb-2">Waktu Habis</h1>
+            <p class="text-sm text-gray-600 font-medium leading-relaxed">Waktu pengerjaan telah berakhir. Silakan angkat tangan dan lapor kepada pengawas ruangan.</p>
+        </div>
+    </div>
+
     <!-- MODAL PERINGATAN PELANGGARAN -->
     <div id="warning-modal" class="hidden fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
         <div id="warning-box" class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4">
@@ -252,8 +264,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </div>
-            <h1 class="text-3xl font-black text-red-600 mb-3 tracking-tight">UJIAN DIHENTIKAN</h1>
-            <p class="text-gray-800 mb-6 font-bold text-base leading-relaxed">Anda telah melanggar aturan keluar dari layar ujian sebanyak 3 kali.</p>
+            <h1 class="text-3xl font-black text-red-600 mb-3 tracking-tight">DIDISKUALIFIKASI</h1>
+            <p class="text-gray-800 mb-6 font-bold text-base leading-relaxed">Anda telah keluar dari layar ujian sebanyak 3 kali.</p>
             <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
                 <p class="text-xs text-red-700 font-semibold leading-relaxed">Akses ujian ditutup otomatis oleh sistem SMK AL IKHLAS LONG KALI. Silakan angkat tangan dan lapor kepada pengawas ruangan.</p>
             </div>
@@ -276,7 +288,7 @@
         // URL Web App Google Apps Script untuk mencatat pelanggaran. Kosongkan jika belum dipakai.
         var URL_LOG = '';
         // PIN yang dipegang pengawas untuk membuka kunci siswa yang terdiskualifikasi. GANTI sebelum dipakai.
-        var PIN_PENGAWAS = 'Pengawas2026';
+        var PIN_PENGAWAS = '123456';
         /* =============================================== */
 
         var isExamRunning = false;
@@ -309,6 +321,19 @@
         }
 
         var linkSoalFinal = ambilLinkSoal();
+
+        // Parameter waktu dibaca dari URL, ditulis SEBELUM soal=, contoh: ?menit=90&min=20&soal=...
+        function ambilParam(nama, def) {
+            var s = window.location.search;
+            var i = s.indexOf('soal=');
+            if (i !== -1) s = s.substring(0, i);
+            var m = s.match(new RegExp('[?&]' + nama + '=([^&]*)'));
+            return m ? decodeURIComponent(m[1]) : def;
+        }
+        var DURASI_MENIT = parseInt(ambilParam('menit', '0'), 10) || 0;   // 0 = tanpa hitung mundur
+        var MIN_MENIT = parseInt(ambilParam('min', '0'), 10) || 0;        // 0 = tombol selesai tidak dikunci
+        var waktuMulai = 0;
+        var waktuHabisSudah = false;
 
         // PERBAIKAN: jumlah pelanggaran disimpan, jadi tidak hilang saat halaman di-refresh
         var KEY = 'ujian_' + hashSederhana(linkSoalFinal);
@@ -373,7 +398,9 @@
                 alert("Link soal tidak ditemukan di URL!");
                 return;
             }
-            siapkanSuara();
+
+            try { siapkanSuara(); } catch (e) {}
+
             var tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('watermark-text').innerHTML = 'SMK AL IKHLAS<br>LONG KALI<br><span style="font-size: 1.4rem">' + tanggal + '</span>';
 
@@ -384,6 +411,16 @@
             pulihkanWarna();
             sedangKeluar = false;
             kirimLog('MULAI', '');
+
+            // Waktu mulai disimpan, jadi refresh tidak mengulang waktu dari awal
+            var tersimpan = parseInt(bacaLokal(KEY + '_mulai') || '0', 10);
+            if (tersimpan && Date.now() - tersimpan < 12 * 3600 * 1000) {
+                waktuMulai = tersimpan;
+            } else {
+                waktuMulai = Date.now();
+                simpanLokal(KEY + '_mulai', waktuMulai);
+            }
+            tickWaktu();
             
             if (!isIOS) {
                 try {
@@ -410,8 +447,11 @@
         }
 
         function konfirmasiKeluarUjian() {
+            // Tidak boleh keluar sebelum waktu minimum lewat
+            if (MIN_MENIT > 0 && Date.now() - waktuMulai < MIN_MENIT * 60000) return;
             isExamRunning = false;
-            kirimLog('SELESAI', '');
+            kirimLog('SELESAI', 'durasi ' + Math.floor((Date.now() - waktuMulai) / 60000) + ' menit');
+            simpanLokal(KEY + '_mulai', 0);
             document.getElementById('finish-guide-modal').classList.add('hidden');
             document.getElementById('exam-screen').classList.add('hidden');
             document.getElementById('finished-screen').classList.remove('hidden');
@@ -449,7 +489,7 @@
             pelanggaran++;
             simpanLokal(KEY + '_pel', pelanggaran);
             kirimLog(pelanggaran >= maxPelanggaran ? 'DISKUALIFIKASI' : 'PELANGGARAN', alasan);
-            bunyiPelanggaran(pelanggaran);
+            try { bunyiPelanggaran(pelanggaran); } catch (e) {}
 
             var overlay = document.getElementById('violation-overlay');
             var badge = document.getElementById('status-badge');
@@ -461,7 +501,7 @@
             if (pelanggaran === 1) {
                 overlay.className = "violation-overlay status-orange";
                 badge.className = "fixed top-2 left-1/2 -translate-x-1/2 z-50 px-4 py-1.5 rounded-full bg-orange-500 text-white font-extrabold text-xs tracking-wider shadow-lg uppercase";
-                badge.innerText = "⚠️ PELANGGARAN 1/3 (ORANYE)";
+                badge.innerText = "⚠️ PELANGGARAN 1/3";
                 badge.classList.remove('hidden');
 
                 warningBox.className = "bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-orange-500";
@@ -550,58 +590,116 @@
             }
         }
 
+        /* ====== WAKTU PENGERJAAN ====== */
+        function formatWaktu(d) {
+            if (d < 0) d = 0;
+            var m = Math.floor(d / 60), s = d % 60;
+            return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+
+        function waktuHabis() {
+            if (waktuHabisSudah) return;
+            waktuHabisSudah = true;
+            isExamRunning = false;
+            kirimLog('WAKTU HABIS', '');
+            document.getElementById('exam-screen').classList.add('hidden');
+            document.getElementById('warning-modal').classList.add('hidden');
+            document.getElementById('finish-guide-modal').classList.add('hidden');
+            document.getElementById('timeup-screen').classList.remove('hidden');
+            if (!isIOS) {
+                try {
+                    if (document.fullscreenElement && document.exitFullscreen) {
+                        document.exitFullscreen().catch(function() {});
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function tickWaktu() {
+            if (!waktuMulai) return;
+            if (document.getElementById('exam-screen').classList.contains('hidden')) return;
+            var terpakai = Math.floor((Date.now() - waktuMulai) / 1000);
+            var badge = document.getElementById('timer-badge');
+
+            if (DURASI_MENIT > 0) {
+                var sisa = DURASI_MENIT * 60 - terpakai;
+                badge.classList.remove('hidden');
+                badge.textContent = '⏱ ' + formatWaktu(sisa);
+                badge.classList.toggle('timer-menipis', sisa <= 300);   // 5 menit terakhir: merah berkedip
+                if (sisa <= 0) { waktuHabis(); return; }
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            var btn = document.getElementById('btn-selesai');
+            var teks = document.getElementById('teks-selesai');
+            var tunggu = MIN_MENIT * 60 - terpakai;
+            if (tunggu > 0) {
+                btn.disabled = true;
+                teks.textContent = 'Selesai (tersedia ' + formatWaktu(tunggu) + ')';
+            } else {
+                btn.disabled = false;
+                teks.textContent = 'Sudah Selesai?';
+            }
+        }
+        setInterval(tickWaktu, 1000);
+
         document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
         /* ====== WAKE LOCK: menjaga layar HP tetap menyala selama ujian ====== */
-var wakeLock = null;
-var wlMeminta = false;
-setInterval(function() {
-    if (!('wakeLock' in navigator)) return;
-    if (isExamRunning && !document.hidden && !wlMeminta && (!wakeLock || wakeLock.released)) {
-        wlMeminta = true;
-        navigator.wakeLock.request('screen')
-            .then(function(l) { wakeLock = l; wlMeminta = false; })
-            .catch(function() { wlMeminta = false; });
-    } else if (!isExamRunning && wakeLock && !wakeLock.released) {
-        wakeLock.release().catch(function() {});
-        wakeLock = null;
-    }
-}, 1500);
+        var wakeLock = null;
+        var wlMeminta = false;
+        setInterval(function() {
+            if (!('wakeLock' in navigator)) return;
+            if (isExamRunning && !document.hidden && !wlMeminta && (!wakeLock || wakeLock.released)) {
+                wlMeminta = true;
+                navigator.wakeLock.request('screen')
+                    .then(function(l) { wakeLock = l; wlMeminta = false; })
+                    .catch(function() { wlMeminta = false; });
+            } else if (!isExamRunning && wakeLock && !wakeLock.released) {
+                wakeLock.release().catch(function() {});
+                wakeLock = null;
+            }
+        }, 1500);
+
         /* ====== SUARA PELANGGARAN ====== */
-var audioCtx = null;
+        var audioCtx = null;
 
-function siapkanSuara() {
-    try {
-        var AC = window.AudioContext || window.webkitAudioContext;
-        if (AC && !audioCtx) audioCtx = new AC();
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    } catch (e) {}
-}
+        function siapkanSuara() {
+            try {
+                var AC = window.AudioContext || window.webkitAudioContext;
+                if (AC && !audioCtx) audioCtx = new AC();
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {}
+        }
 
-function bunyi(kali, frek, dur) {
-    if (!audioCtx) return;
-    for (var i = 0; i < kali; i++) {
-        var o = audioCtx.createOscillator();
-        var g = audioCtx.createGain();
-        var t = audioCtx.currentTime + i * (dur + 0.12);
-        o.type = 'square';
-        o.frequency.value = frek;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        o.connect(g);
-        g.connect(audioCtx.destination);
-        o.start(t);
-        o.stop(t + dur + 0.05);
-    }
-}
+        function bunyi(kali, frek, dur) {
+            if (!audioCtx) return;
+            for (var i = 0; i < kali; i++) {
+                var o = audioCtx.createOscillator();
+                var g = audioCtx.createGain();
+                var t = audioCtx.currentTime + i * (dur + 0.12);
+                o.type = 'square';
+                o.frequency.value = frek;
+                g.gain.setValueAtTime(0.0001, t);
+                g.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.start(t);
+                o.stop(t + dur + 0.05);
+            }
+        }
 
-function bunyiPelanggaran(n) {
-    try {
-        if (n === 1) { bunyi(1, 660, 0.3); if (navigator.vibrate) navigator.vibrate(200); }
-        else if (n === 2) { bunyi(3, 880, 0.2); if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); }
-        else { bunyi(5, 1000, 0.45); if (navigator.vibrate) navigator.vibrate([500, 150, 500, 150, 500]); }
-    } catch (e) {}
-}
+        function bunyiPelanggaran(n) {
+            try {
+                if (n === 1) { bunyi(1, 660, 0.3); if (navigator.vibrate) navigator.vibrate(200); }
+                else if (n === 2) { bunyi(3, 880, 0.2); if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); }
+                else { bunyi(5, 1000, 0.45); if (navigator.vibrate) navigator.vibrate([500, 150, 500, 150, 500]); }
+            } catch (e) {}
+        }
     </script>
 </body>
 </html>
