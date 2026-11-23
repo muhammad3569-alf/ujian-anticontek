@@ -469,6 +469,7 @@
 
         function tutupModalPeringatan() {
             document.getElementById('warning-modal').classList.add('hidden');
+            sedangKeluar = false;
             if (!isIOS) {
                 try {
                     if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
@@ -538,30 +539,43 @@
         }
 
         // Satu pintu untuk semua deteksi "keluar": selama siswa masih di luar, hanya dihitung 1 kali
+        var waktuKeluar = 0;
         function cekKeluar(alasan) {
             if (!isExamRunning || sedangKeluar) return;
             sedangKeluar = true;
+            waktuKeluar = Date.now();
             catatPelanggaran(alasan);
         }
 
-        // PERBAIKAN: pemeriksaan fokus berkala. document.hasFocus() tetap true saat siswa mengetik di dalam form (iframe),
-        // tetapi false saat pindah ke aplikasi/jendela lain (termasuk split-screen dan jendela mengambang).
+        function siswaKembali() { sedangKeluar = false; }
+
+        // Penanda "sedang di luar" dilepas otomatis jika halaman terlihat dan sudah lewat 2 detik.
+        // (Tidak memakai document.hasFocus(): hasilnya tidak konsisten di banyak HP dan bisa membuat
+        // penanda macet sehingga pelanggaran berikutnya tidak tercatat.)
         setInterval(function() {
-            if (!isExamRunning) return;
-            if (document.hidden) {
-                cekKeluar("berpindah tab atau aplikasi");
-            } else if (!document.hasFocus()) {
-                cekKeluar("keluar dari area ujian");
-            } else {
-                sedangKeluar = false;   // siswa sudah kembali
-            }
-        }, 1000);
+            if (sedangKeluar && !document.hidden && Date.now() - waktuKeluar > 2000) sedangKeluar = false;
+        }, 500);
 
         document.addEventListener("visibilitychange", function() {
             if (document.hidden) {
                 cekKeluar("berpindah tab atau aplikasi");
+            } else {
+                siswaKembali();
             }
         });
+
+        // Fokus pindah keluar halaman (mis. jendela lain). Fokus yang pindah ke dalam form (iframe) diabaikan.
+        window.addEventListener("blur", function() {
+            setTimeout(function() {
+                if (!isExamRunning) return;
+                if (document.hidden) {
+                    cekKeluar("berpindah tab atau aplikasi");
+                } else if (document.activeElement !== document.getElementById('form-iframe')) {
+                    cekKeluar("keluar dari area ujian");
+                }
+            }, 200);
+        });
+        window.addEventListener("focus", siswaKembali);
 
         // BARU: keluar dari layar penuh (mis. menekan Esc) juga dihitung
         function cekFullscreen() {
