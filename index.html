@@ -288,7 +288,7 @@
         // URL Web App Google Apps Script untuk mencatat pelanggaran. Kosongkan jika belum dipakai.
         var URL_LOG = '';
         // PIN yang dipegang pengawas untuk membuka kunci siswa yang terdiskualifikasi. GANTI sebelum dipakai.
-        var PIN_PENGAWAS = 'Pengawas2026';
+        var PIN_PENGAWAS = '123456';
         /* =============================================== */
 
         var isExamRunning = false;
@@ -399,6 +399,8 @@
                 return;
             }
 
+            try { siapkanSuara(); } catch (e) {}
+
             var tanggal = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('watermark-text').innerHTML = 'SMK AL IKHLAS<br>LONG KALI<br><span style="font-size: 1.4rem">' + tanggal + '</span>';
 
@@ -487,6 +489,7 @@
             pelanggaran++;
             simpanLokal(KEY + '_pel', pelanggaran);
             kirimLog(pelanggaran >= maxPelanggaran ? 'DISKUALIFIKASI' : 'PELANGGARAN', alasan);
+            try { bunyiPelanggaran(pelanggaran); } catch (e) {}
 
             var overlay = document.getElementById('violation-overlay');
             var badge = document.getElementById('status-badge');
@@ -660,6 +663,82 @@
                 wakeLock = null;
             }
         }, 1500);
+
+        /* ====== SUARA ALARM PELANGGARAN ====== */
+        var audioCtx = null;
+
+        function siapkanSuara() {
+            try {
+                var AC = window.AudioContext || window.webkitAudioContext;
+                if (AC && (!audioCtx || audioCtx.state === 'closed')) audioCtx = new AC();
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {}
+        }
+
+        // Satu bunyi, nada bisa meluncur dari frekAwal ke frekAkhir
+        function nada(mulai, dur, frekAwal, frekAkhir, jenis, vol) {
+            var o = audioCtx.createOscillator();
+            var g = audioCtx.createGain();
+            o.type = jenis;
+            o.frequency.setValueAtTime(frekAwal, mulai);
+            if (frekAkhir !== frekAwal) o.frequency.linearRampToValueAtTime(frekAkhir, mulai + dur);
+            g.gain.setValueAtTime(0.0001, mulai);
+            g.gain.exponentialRampToValueAtTime(vol, mulai + 0.02);
+            g.gain.setValueAtTime(vol, mulai + dur - 0.03);
+            g.gain.exponentialRampToValueAtTime(0.0001, mulai + dur);
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.start(mulai);
+            o.stop(mulai + dur + 0.02);
+        }
+
+        // Pelanggaran 1: alarm jam, 2 rangkaian x 4 bip
+        function alarmJam() {
+            var t = audioCtx.currentTime + 0.05;
+            for (var r = 0; r < 2; r++) {
+                for (var i = 0; i < 4; i++) {
+                    nada(t, 0.12, 1800, 1800, 'square', 0.35);
+                    t += 0.2;
+                }
+                t += 0.35;
+            }
+        }
+
+        // Pelanggaran 2: sirene dua nada (nee-naw), 4 putaran
+        function sireneDuaNada() {
+            var t = audioCtx.currentTime + 0.05;
+            for (var i = 0; i < 4; i++) {
+                nada(t, 0.4, 700, 700, 'sawtooth', 0.4);
+                t += 0.4;
+                nada(t, 0.4, 950, 950, 'sawtooth', 0.4);
+                t += 0.4;
+            }
+        }
+
+        // Pelanggaran 3: sirene panjang naik-turun, sekitar 6 detik
+        function sirenePanjang() {
+            var t = audioCtx.currentTime + 0.05;
+            for (var i = 0; i < 5; i++) {
+                nada(t, 0.6, 600, 1300, 'sawtooth', 0.55);
+                t += 0.6;
+                nada(t, 0.6, 1300, 600, 'sawtooth', 0.55);
+                t += 0.6;
+            }
+        }
+
+        function bunyiPelanggaran(n) {
+            try {
+                siapkanSuara();
+                if (audioCtx) {
+                    if (n === 1) alarmJam();
+                    else if (n === 2) sireneDuaNada();
+                    else sirenePanjang();
+                }
+                if (navigator.vibrate) {
+                    navigator.vibrate(n === 1 ? 300 : n === 2 ? [300, 100, 300, 100, 300] : [600, 150, 600, 150, 600, 150, 600]);
+                }
+            } catch (e) {}
+        }
     </script>
 </body>
 </html>
